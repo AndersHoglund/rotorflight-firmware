@@ -315,7 +315,7 @@
 #define USE_RX_FLYSKY_SPI_LED
 
 #undef  USE_OSD
-#undef  USE_CMS
+#define  USE_CMS
 #undef  USE_MAX7456
 #undef  USE_DASHBOARD
 #undef  USE_RCDEVICE

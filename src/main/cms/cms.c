@@ -35,7 +35,6 @@
 #include "platform.h"
 
 #ifdef USE_CMS
-
 #include "build/build_config.h"
 #include "build/debug.h"
 #include "build/version.h"
