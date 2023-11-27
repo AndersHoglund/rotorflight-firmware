@@ -471,7 +471,7 @@ static void mixerUpdateInputs(void)
     mixerSetInput(MIXER_IN_RC_COMMAND_THROTTLE, getThrottle());
 
     // RC channels
-    for (int i = 0; i < MAX_SUPPORTED_RC_CHANNEL_COUNT; i++)
+    for (int i = 0; i < (MIXER_INPUT_COUNT - MIXER_IN_RC_CHANNEL_ROLL); i++)
         mixerSetInput(MIXER_IN_RC_CHANNEL_ROLL + i, rcCommand[i] / 500);
 
     // Stabilised inputs
