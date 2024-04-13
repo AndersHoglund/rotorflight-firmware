@@ -93,12 +93,12 @@ static inline float getLevelModeDeflection(uint8_t axis)
 static float calcLevelErrorAngle(int axis)
 {
     const rollAndPitchTrims_t *angleTrim = &accelerometerConfig()->accelerometerTrims;
-    float angle = level.AngleLimit * getLevelModeDeflection(axis);
+    float angleSetpoint = level.AngleLimit * getLevelModeDeflection(axis);
 
 #ifdef USE_GPS_RESCUE
-    angle += gpsRescueAngle[axis] / 100.0f; // ANGLE IS IN CENTIDEGREES
+    angleSetpoint += gpsRescueAngle[axis] / 100.0f; // ANGLE IS IN CENTIDEGREES
 #endif
-    angle = constrainf(angle, -level.AngleLimit, level.AngleLimit);
+    angleSetpoint = constrainf(angleSetpoint, -level.AngleLimit, level.AngleLimit);
 
     float currentAngle = ((attitude.raw[axis] - angleTrim->raw[axis]) / 10.0f);
 
@@ -113,9 +113,12 @@ static float calcLevelErrorAngle(int axis)
         }
     }
 
-    float error = angle - currentAngle;
+    if (!isAirborne())
+      currentAngle *= 0.25f;
 
-    return error;
+    float angleError = angleSetpoint - currentAngle;
+
+    return angleError;
 }
 
 // calculates strength of horizon leveling; 0 = none, 1.0 = most leveling
@@ -184,9 +187,6 @@ float angleModeApply(int axis, float pidSetpoint)
     {
         float errorAngle = calcLevelErrorAngle(axis);
 
-        if (!isAirborne())
-            errorAngle *= 0.25f;
-
         pidSetpoint = errorAngle * level.Gain;
     }
 
@@ -198,9 +198,6 @@ float horizonModeApply(int axis, float pidSetpoint)
     if (axis == FD_ROLL || axis == FD_PITCH)
     {
         float errorAngle = calcLevelErrorAngle(axis);
-
-        if (!isAirborne())
-            errorAngle *= 0.25f;
 
         pidSetpoint += errorAngle * horizon.Gain * calcHorizonLevelStrength();
     }
