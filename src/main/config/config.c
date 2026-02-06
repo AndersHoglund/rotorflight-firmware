@@ -331,12 +331,14 @@ static void validateAndFixConfig(void)
 #endif
 
 #if defined(USE_SRXL2_ESC)
-    if (!findSerialPortConfig(FUNCTION_SRXL2_ESC)) {
-        featureDisableImmediate(FEATURE_SRXL2_ESC);
+    if (findSerialPortConfig(FUNCTION_SRXL2_ESC)) {
+      if (!featureIsConfigured(FEATURE_SRXL2_ESC)) {
+        featureEnableImmediate(FEATURE_SRXL2_ESC);
+      }
+      validateAndFixSrxl2escConfig();
     }
-
-    if (featureIsConfigured(FEATURE_SRXL2_ESC)) {
-        validateAndFixSrxl2escConfig();
+    else {
+      featureDisableImmediate(FEATURE_SRXL2_ESC);
     }
 #endif
 
