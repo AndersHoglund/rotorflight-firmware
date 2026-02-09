@@ -542,98 +542,6 @@ bool srxl2escProcessHandshake(const Srxl2Header* header)
     return true;
 }
 
-void srxl2escProcessChannelData(const Srxl2ChannelDataHeader* channelData, srxl2esc_runtimeState_t *runtimeState) {
-    globalResult = RX_FRAME_COMPLETE;
-
-    if (channelData->rssi >= 0) {
-        const int rssiPercent = channelData->rssi;
-        setRssi(scaleRange(rssiPercent, 0, 100, 0, RSSI_MAX_VALUE), RSSI_SOURCE_RX_PROTOCOL);
-    }
-
-    //If receiver is in a connected state, and a packet is missed, the channel mask will be 0.
-    if (!channelData->channelMask.u32) {
-        globalResult |= RX_FRAME_DROPPED;
-        return;
-    }
-
-    const uint16_t *frameChannels = (const uint16_t *) (channelData + 1);
-    uint32_t channelMask = channelData->channelMask.u32;
-    while (channelMask) {
-        unsigned idx = __builtin_ctz (channelMask);
-        uint32_t mask = 1 << idx;
-        runtimeState->channelData[idx] = *frameChannels++;
-        channelMask &= ~mask;
-    }
-
-    // Fix: channelData_header was an invalid identifier; use channelData for debug output
-    DEBUG_PRINTF("channel data: %d %d %x\r\n", channelData->rssi, channelData->frameLosses, channelData->channelMask.u32);
-
-    srxl2escAdvanceHandshakeStage(SRXL2_ESC_HANDSHAKE_STAGE_WAITING_FINAL_ACK);
-}
-
-bool srxl2escProcessControlData(const Srxl2Header* header, srxl2esc_runtimeState_t *runtimeState)
-{
-    const Srxl2ControlDataSubHeader* controlData = (const Srxl2ControlDataSubHeader*)(header + 1);
-    const uint8_t ownId = (FlightController << 4) | unitId;
-
-    if (controlData->replyId == ownId) {
-        telemetryRequested = true;
-        DEBUG_PRINTF("command: %x replyId: %x ownId: %x\r\n",
-            controlData->command, controlData->replyId, ownId);
-    }
-
-    // ---- Normal handling first ------------------------------------------------
-    switch (controlData->command) {
-    case ChannelData: {
-        const Srxl2ChannelDataHeader *cdh = (const Srxl2ChannelDataHeader *)(controlData + 1);
-        srxl2escProcessChannelData(cdh, runtimeState);
-    } break;
-
-    case FailsafeChannelData: {
-        globalResult |= RX_FRAME_FAILSAFE;
-        setRssiDirect(0, RSSI_SOURCE_RX_PROTOCOL);
-    } break;
-
-    default:
-        break;
-    }
-
-    // ---- Compute and log any extra bytes ("tail") ----------------------------
-    // header->length includes: 3-byte smartesc header + payload + 2-byte CRC
-    const int totalLen   = (int)header->length;
-    const int crcBytes   = 2;
-    const int hdrBytes   = 3; // id, packetType, length
-
-    // payload starts at 'controlData' (command is first byte in payload)
-    int payloadLen = totalLen - hdrBytes - crcBytes;
-    if (payloadLen < 0) payloadLen = 0;
-
-    // Bytes consumed by the specific ControlData subtype:
-    int consumed = 0;
-    switch (controlData->command) {
-    case ChannelData: {
-        // layout after command/replyId:
-        //   rssi(1), frameLosses(1), channelMask(4), then N 16-bit channel values
-        const Srxl2ChannelDataHeader *cdh = (const Srxl2ChannelDataHeader *)(controlData + 1);
-        const int subhdrLen = 1 /*command*/ + 1 /*replyId*/ + 1 /*rssi*/ + 1 /*frameLosses*/ + 4 /*channelMask*/;
-        const unsigned pop = __builtin_popcount(cdh->channelMask.u32);
-        consumed = subhdrLen + (int)(2 * pop);
-    } break;
-    case FailsafeChannelData: {
-        // failsafe control block typically ends at frameLosses/channelMask (no channel words)
-        consumed = 1 /*command*/ + 1 /*replyId*/ + 1 /*rssi*/ + 1 /*frameLosses*/ + 4 /*channelMask*/;
-    } break;
-    default:
-        consumed = MIN(payloadLen, 2); // at least command+replyId, be conservative
-        break;
-    }
-
-    if (consumed < 0) consumed = 0;
-    if (consumed > payloadLen) consumed = payloadLen;
-
-    return true;
-}
-
 bool srxl2escProcessPacket(const Srxl2Header* header, srxl2esc_runtimeState_t *runtimeState)
 {
     UNUSED(runtimeState);
@@ -1439,6 +1347,9 @@ bool srxl2escDriverInit(void)
                     },
                 };
                 
+                /* Delay initial handshake transmit for ESCs that need more time*/
+                delayMicroseconds(50000);
+
                 srxl2escWriteData(&handshake, sizeof(handshake));
                 srxl2escTrySendPendingWriteBuffer();
                 nextHandshakeUs = now + 50000; // next attempt in 50ms
