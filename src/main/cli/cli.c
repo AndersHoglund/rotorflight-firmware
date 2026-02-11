@@ -6511,93 +6511,6 @@ typedef struct {
 
 static void cliHelp(const char *cmdName, char *cmdline);
 
-#ifdef USE_SERIALRX_SRXL2
-static void cliSrxl2Debug(const char *cmdName, char *cmdline)
-{
-    UNUSED(cmdName);
-    // Support subcommands: "srxl2 rxconfig" and "srxl2 runtime"
-    extern uint8_t busMasterDeviceId __attribute__((weak));
-    extern bool telemetryRequested __attribute__((weak));
-    extern const char *srxl2_debug_messageDM(void);
-    extern const char *srxl2_debug_lastErrorDM(void);
-
-    // rxConfig access and runtime state
-    extern rxRuntimeState_t rxRuntimeState;
-
-    // Trim leading spaces from cmdline
-    char *p = cmdline;
-    if (p) {
-        while (*p == ' ') p++;
-    }
-
-    if (p && strncasecmp(p, "rxconfig", 8) == 0) {
-        // Print rxConfig fields
-        const rxConfig_t *cfg = rxConfig();
-        if (!cfg) {
-            cliPrintLine("rxConfig: <NULL>");
-            return;
-        }
-        cliPrintLinef("RX config:");
-        cliPrintLinef("  serialrx_provider: %u", cfg->serialrx_provider);
-        cliPrintLinef("  serialrx_inverted: %u", cfg->serialrx_inverted);
-        cliPrintLinef("  halfDuplex: %u", cfg->halfDuplex);
-        cliPrintLinef("  pinSwap: %u", cfg->pinSwap);
-        cliPrintLinef("  rx_pulse_min: %u", cfg->rx_pulse_min);
-        cliPrintLinef("  rx_pulse_max: %u", cfg->rx_pulse_max);
-        cliPrintLinef("  rssi_channel: %u", cfg->rssi_channel);
-        cliPrintLinef("  rssi_scale: %u", cfg->rssi_scale);
-        cliPrintLinef("  rssi_invert: %u", cfg->rssi_invert);
-        cliPrintLinef("  rssi_offset: %d", cfg->rssi_offset);
-        cliPrintLinef("  rssi_src_frame_errors: %u", cfg->rssi_src_frame_errors);
-        cliPrintLinef("  rssi_src_frame_lpf_period: %u", cfg->rssi_src_frame_lpf_period);
-        cliPrintLinef("  spektrum_bind_pin_override_ioTag: %u", cfg->spektrum_bind_pin_override_ioTag);
-        cliPrintLinef("  spektrum_bind_plug_ioTag: %u", cfg->spektrum_bind_plug_ioTag);
-        cliPrintLinef("  spektrum_sat_bind: %u", cfg->spektrum_sat_bind);
-        cliPrintLinef("  spektrum_sat_bind_autoreset: %u", cfg->spektrum_sat_bind_autoreset);
-        cliPrintLinef("  srxl2_unit_id: %u", cfg->srxl2_unit_id);
-        cliPrintLinef("  srxl2_baud_fast: %u", cfg->srxl2_baud_fast);
-        cliPrintLinef("  sbus_baud_fast: %u", cfg->sbus_baud_fast);
-        cliPrintLinef("  crsf_use_rx_snr: %u", cfg->crsf_use_rx_snr);
-        cliPrintLinef("  crsf_use_negotiated_baud: %u", cfg->crsf_use_negotiated_baud);
-        // rcmap
-        cliPrint("  rcmap: ");
-        for (int i = 0; i < RX_MAPPABLE_CHANNEL_COUNT; i++) {
-            cliPrintf("%u", (unsigned)cfg->rcmap[i]);
-            if (i + 1 < RX_MAPPABLE_CHANNEL_COUNT) cliPrint(" ");
-        }
-        cliPrintLinefeed();
-        return;
-    }
-
-    if (p && strncasecmp(p, "runtime", 7) == 0) {
-        // Print rxRuntimeState
-        cliPrintLinef("RX runtime state:");
-        cliPrintLinef("  rxProvider: %u", (unsigned)rxRuntimeState.rxProvider);
-        cliPrintLinef("  serialrxProvider: %u", (unsigned)rxRuntimeState.serialrxProvider);
-        cliPrintLinef("  channelCount: %u", (unsigned)rxRuntimeState.channelCount);
-        cliPrintLinef("  rxRefreshRate: %u", (unsigned)rxRuntimeState.rxRefreshRate);
-        cliPrintLinef("  lastRcFrameTimeUs: %u", (unsigned)rxRuntimeState.lastRcFrameTimeUs);
-        cliPrintLinef("  channelData pointer: %p", rxRuntimeState.channelData);
-        cliPrintLinef("  frameData pointer: %p", rxRuntimeState.frameData);
-        // If channelData is present, print first few values
-        if (rxRuntimeState.channelData) {
-            cliPrint("  channelData[:8]: ");
-            for (int i = 0; i < 8 && i < (int)rxRuntimeState.channelCount; i++) {
-                cliPrintf("%u ", (unsigned)rxRuntimeState.channelData[i]);
-            }
-            cliPrintLinefeed();
-        }
-        return;
-    }
-
-    cliPrintLinef("Bus Master ID: 0x%02X", busMasterDeviceId);
-    cliPrintLinef("Telemetry Requested Now: %s", telemetryRequested ? "YES" : "NO");
-    cliPrintLinef("SRXL2 Status: %s", srxl2_debug_messageDM());
-    cliPrintLinef("Last Error: %s", srxl2_debug_lastErrorDM());
-
-}
-#endif
-
 #ifdef USE_SRXL2_ESC
 static void cliSrxl2Esc(const char *cmdName, char *cmdline)
 {
@@ -6613,29 +6526,6 @@ static void cliSrxl2Esc(const char *cmdName, char *cmdline)
     if (cmdline) {
         while (*cmdline == ' ') cmdline++;
         if (*cmdline) {
-            if (strncasecmp(cmdline, "rate", 4) == 0) {
-                char *p = cmdline + 4;
-                while (*p == ' ') p++;
-                if (*p) {
-                    uint32_t rate = (uint32_t)atoi(p);
-                    if (rate == 0) {
-                        cliPrintLine("Rate must be > 0 Hz");
-                    } else {
-                        srxl2escSetThrottleRateHz(rate);
-                        const uint32_t effective = srxl2escGetThrottleRateHz();
-                        if (effective != rate) {
-                            cliPrintLinef("Throttle refresh set to %u Hz (clamped from %u)", effective, rate);
-                        } else {
-                            cliPrintLinef("Throttle refresh set to %u Hz", effective);
-                        }
-                    }
-                } else {
-                    const uint32_t effective = srxl2escGetThrottleRateHz();
-                    cliPrintLinef("Current throttle refresh: %u Hz", effective);
-                }
-                return;
-            }
-
             if (strncasecmp(cmdline, "telem", 5) == 0) {
                 char *p = cmdline + 5;
                 while (*p == ' ') p++;
@@ -6855,9 +6745,6 @@ const clicmd_t cmdTable[] = {
 #endif
 #if defined(USE_TELEMETRY_SRXL)
     CLI_COMMAND_DEF("telemdebug", "telemetry debug helpers", "status | queue | flush | send | force", cliTelemDebug),
-#endif
-#ifdef USE_SERIALRX_SRXL2
-    CLI_COMMAND_DEF("srxl2", "show SRXL2 debug", NULL, cliSrxl2Debug),
 #endif
     CLI_COMMAND_DEF("status", "show status", NULL, cliStatus),
     CLI_COMMAND_DEF("tasks", "show task stats", NULL, cliTasks),
