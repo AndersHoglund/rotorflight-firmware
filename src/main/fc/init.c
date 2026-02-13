@@ -778,7 +778,6 @@ void init(void)
     }
 #endif
 
-
 #ifdef USE_FREQ_SENSOR
     if (featureIsEnabled(FEATURE_FREQ_SENSOR)) {
         freqInit(freqConfig());
