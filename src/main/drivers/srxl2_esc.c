@@ -42,6 +42,7 @@
 #include "rx/rx.h"
 #include "../sensors/esc_sensor.h"
 #include "config/feature.h"
+#include "pg/battery.h"
 #include "pg/srxl2_esc.h"
 #if defined(USE_MOTOR)
 #include "flight/motors.h"
@@ -1166,8 +1167,14 @@ void validateAndFixSrxl2escConfig()
     // Force half duplex
     escSensorConfigMutable()->halfDuplex = true;
 
-    // Force SRXL2 protocol
+    // Force SRXL2 ESC sensor protocol
     escSensorConfigMutable()->protocol = ESC_SENSOR_PROTO_SRXL2;
+
+    // Set Voltage and Current meter defauls if not set.
+    if (batteryConfig()->voltageMeterSource == VOLTAGE_METER_NONE)
+      batteryConfigMutable()->voltageMeterSource = VOLTAGE_METER_ESC;
+    if (batteryConfig()->currentMeterSource == CURRENT_METER_NONE)
+      batteryConfigMutable()->currentMeterSource = CURRENT_METER_ESC;
 
     // Force motor pwm protocol to SRXL2
     motorConfigMutable()->dev.motorPwmProtocol = PWM_TYPE_SRXL2;
