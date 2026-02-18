@@ -81,12 +81,15 @@
 #define SRXL_FRAMETYPE_ESC          0x20   // Electronic Speed Control
 #define SRXL_FRAMETYPE_GPS_LOC      0x16   // GPS Location Data (Eagle Tree)
 #define SRXL_FRAMETYPE_GPS_STAT     0x17
-
+#define SRXL_FRAMETYPE_SMART_BAT    0x42
 #define SRXL_FRAMETYPE_SID          0x00   // Secondary id. (Only 0x00 suppprted it seems, no support for multiple tlm frames/devices of the same type.)
 
 static bool srxlTelemetryEnabled;
 static bool srxl2 = false;
 static uint8_t srxlFrame[SRXL_FRAME_SIZE_MAX];
+
+static uint8_t batteryNo = 0;
+static uint8_t frameType = 0;
 
 static void srxlInitializeFrame(sbuf_t *dst)
 {
@@ -461,7 +464,8 @@ bool srxlFrameFlightPackCurrent(sbuf_t *dst, timeUs_t currentTimeUs)
   return false;
 }
 
-#ifdef USE_ESC_SENSOR_TELEMETRY
+#ifdef USE_SPEKTRUM_ESC_TELEMETRY
+
 
 //  ****** ESC Telemetry frame ******
 //
@@ -554,8 +558,208 @@ bool srxlFrameEsc(sbuf_t *dst, timeUs_t currentTimeUs)
     }
     return false;
 }
-#endif
+#endif // USE_SPEKTRUM_ESC_TELEMETRY
 
+#ifdef USE_SPEKTRUM_SMART_BATTERY_TELEMETRY
+
+bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
+{
+    UNUSED(currentTimeUs);
+
+    switch (frameType) {
+        case 0:
+          /*
+            typedef struct srxl2_smart_bat_realtime_t {
+            uint8_t identifier;  // Source device 0x42
+            uint8_t s_id;        // Secondary ID
+            uint8_t type;        // 0x00
+            int8_t temp;
+            uint32_t current;      // mA
+            uint16_t consumption;  // mAh
+            uint16_t min_cel;
+            uint16_t max_cel;
+            } __attribute__((packed)) srxl2_smart_bat_realtime_t;
+          */
+
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SMART_BAT);
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
+            sbufWriteU8(dst,  0x00 + batteryNo);    // Packet type 0x00
+            sbufWriteS8(dst,  10);      // Temp
+            sbufWriteU32(dst, 12340);   // Current, mA
+            sbufWriteU16(dst, 5678);    // Capacity used
+            sbufWriteU16(dst, 3330);    // Min cell voltage
+            sbufWriteU16(dst, 4250);    // Max cell voltage
+            sbufWriteU16(dst, 0x0000);  // Filler
+
+            break;
+
+      case 1:
+        /*
+          typedef struct srxl2_smart_bat_cells_1_t {
+          uint8_t identifier;  // Source device 0x42
+          uint8_t s_id;        // Secondary ID
+          uint8_t type;        // 0x10
+          int8_t temp;
+          uint16_t cell_1;  // V * 1000
+          uint16_t cell_2;
+          uint16_t cell_3;
+          uint16_t cell_4;
+          uint16_t cell_5;
+          uint16_t cell_6;
+          } __attribute__((packed)) srxl2_smart_bat_cells_1_t;
+        */
+
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SMART_BAT);
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
+            sbufWriteU8(dst,  0x10 + batteryNo);    // Packet type 0x10
+
+            sbufWriteS8(dst,  10);      // Temp
+            sbufWriteU16(dst, 3456);    // Voltage Cell1 mV
+            sbufWriteU16(dst, 4321);    // Voltage Cell2 mV
+            sbufWriteU16(dst, 3210);    // Voltage Cell3 mV
+            sbufWriteU16(dst, 3232);    // Voltage Cell4 mV
+            sbufWriteU16(dst, 3233);    // Voltage Cell5 mV
+            sbufWriteU16(dst, 3234);    // Voltage Cell6 mV
+
+            break;
+
+      case 2:
+        /*
+          typedef struct srxl2_smart_bat_cells_2_t {
+          uint8_t identifier;  // Source device 0x42
+          uint8_t s_id;        // Secondary ID
+          uint8_t type;        // 0x20
+          int8_t temp;
+          uint16_t cell_7;
+          uint16_t cell_8;
+          uint16_t cell_9;
+          uint16_t cell_10;
+          uint16_t cell_11;
+          uint16_t cell_12;
+          } __attribute__((packed)) srxl2_smart_bat_cells_2_t;
+        */
+
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SMART_BAT);
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
+            sbufWriteU8(dst,  0x20 + batteryNo);    // Packet type 0x20
+
+            sbufWriteS8(dst,  11);      // Temp
+            sbufWriteU16(dst, 3456);    // Voltage Cell7 mV
+            sbufWriteU16(dst, 4321);    // Voltage Cell8 mV
+            sbufWriteU16(dst, 3210);    // Voltage Cell9 mV
+            sbufWriteU16(dst, 3232);    // Voltage Cell10 mV
+            sbufWriteU16(dst, 3233);    // Voltage Cell11 mV
+            sbufWriteU16(dst, 3234);    // Voltage Cell12 mV
+
+            break;
+
+      case 3:
+
+        /*
+          typedef struct srxl2_smart_bat_cells_3_t {
+          uint8_t identifier;  // Source device 0x42
+          uint8_t s_id;        // Secondary ID
+          uint8_t type;        // 0x30
+          int8_t temp;
+          uint16_t cell_13;
+          uint16_t cell_14;
+          uint16_t cell_15;
+          uint16_t cell_16;
+          uint16_t cell_17;
+          uint16_t cell_18;
+          } __attribute__((packed)) srxl2_smart_bat_cells_3_t;
+        */
+
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SMART_BAT);
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
+            sbufWriteU8(dst,  0x30 + batteryNo);    // Packet type 0x30
+
+            sbufWriteS8(dst,  12);      // Temp
+            sbufWriteU16(dst, 3456);    // Voltage Cell13 mV
+            sbufWriteU16(dst, 4321);    // Voltage Cell14 mV
+            sbufWriteU16(dst, 3210);    // Voltage Cell15 mV
+            sbufWriteU16(dst, 3232);    // Voltage Cell16 mV
+            sbufWriteU16(dst, 3233);    // Voltage Cell17 mV
+            sbufWriteU16(dst, 3234);    // Voltage Cell18 mV
+
+            break;
+
+      case 4:
+
+        /*
+          typedef struct srxl2_smart_bat_id_t {
+          uint8_t identifier;  // Source device 0x42
+          uint8_t s_id;        // Secondary ID
+          uint8_t type;        // 0x80
+          uint8_t chemistery;
+          uint8_t cells;
+          uint8_t mfg_code;
+          uint16_t cycles;
+          uint8_t uid;
+          } __attribute__((packed)) srxl2_smart_bat_id_t;
+        */
+
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SMART_BAT);
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
+            sbufWriteU8(dst,  0x80 + batteryNo);    // Packet type 0x80
+
+            sbufWriteU8(dst,  1);       // Chemistery
+            sbufWriteU8(dst, 18);       // Cells
+            sbufWriteU8(dst, 55);       // Mfg
+            sbufWriteU16(dst, 123);     // Cycles
+            sbufWriteU8(dst, 221);      // Uid
+            sbufWriteU8(dst, 0x0);      // Fillers
+            sbufWriteU32(dst, 0x0);
+            sbufWriteU16(dst, 0x0);
+
+            break;
+
+        case 5:
+
+          /*
+            typedef struct srxl2_smart_bat_limits_t {
+            uint8_t identifier;  // Source device 0x42
+            uint8_t s_id;        // Secondary ID
+            uint8_t type;        // 0x90
+            uint8_t rfu;
+            uint16_t capacity;
+            uint16_t discharge_rate;
+            uint16_t overdischarge;
+            uint16_t zero_capacity;
+            uint16_t fully_charged;
+            uint8_t min_temp;
+            uint8_t mex_temp;
+            } __attribute__((packed)) srxl2_smart_bat_limits_t;
+          */
+
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SMART_BAT);
+            sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
+            sbufWriteU8(dst,  0x90 + batteryNo);    // Packet type 0x90
+
+            sbufWriteU8(dst,  44);      // Rfu ??
+            sbufWriteU16(dst, 55);      // Caoacity Ah mAh ??
+            sbufWriteU16(dst, 66);      // Discharge rate C ??
+            sbufWriteU16(dst, 77);      // Overcharge
+            sbufWriteU16(dst, 56);      // Fully Charged
+            sbufWriteU8(dst,  11);      // Min temp
+            sbufWriteU8(dst,  45);      // max temp
+            sbufWriteU16(dst, 0x0);     // Filler
+
+            break;
+        default:
+            break;
+    }
+
+    frameType++;
+    if (frameType > 6 ){
+      frameType = 0;
+      batteryNo++;
+    }
+    if (batteryNo > 1 ) batteryNo = 0;
+    return true;
+}
+
+#endif // SPEKTRUM_SMART_BATTERY_TELEMETRY
 
 
 #if defined (USE_SPEKTRUM_CMS_TELEMETRY) && defined (USE_CMS)
@@ -768,10 +972,16 @@ static bool srxlFrameVTX(sbuf_t *dst, timeUs_t currentTimeUs)
 
 #define SRXL_FP_MAH_COUNT   1
 
-#ifdef USE_ESC_SENSOR_TELEMETRY
+#ifdef USE_SPEKTRUM_ESC_TELEMETRY
 #define SRXL_ESC_COUNT   1
 #else
 #define SRXL_ESC_COUNT   0
+#endif
+
+#ifdef USE_SPEKTRUM_SMART_BATTERY_TELEMETRY
+#define SRXL_SMART_BAT_COUNT 1
+#else
+#define SRXL_SMART_BAT_COUNT 0
 #endif
 
 #if defined(USE_GPS)
@@ -794,7 +1004,7 @@ static bool srxlFrameVTX(sbuf_t *dst, timeUs_t currentTimeUs)
 #define SRXL_VTX_TM_COUNT        0
 #endif
 
-#define SRXL_SCHEDULE_USER_COUNT (SRXL_FP_MAH_COUNT + SRXL_ESC_COUNT + SRXL_SCHEDULE_CMS_COUNT + SRXL_VTX_TM_COUNT + SRXL_GPS_LOC_COUNT + SRXL_GPS_STAT_COUNT)
+#define SRXL_SCHEDULE_USER_COUNT (SRXL_FP_MAH_COUNT + SRXL_ESC_COUNT + SRXL_SMART_BAT_COUNT + SRXL_SCHEDULE_CMS_COUNT + SRXL_VTX_TM_COUNT + SRXL_GPS_LOC_COUNT + SRXL_GPS_STAT_COUNT)
 #define SRXL_SCHEDULE_COUNT_MAX  (SRXL_SCHEDULE_MANDATORY_COUNT + 1)
 #define SRXL_TOTAL_COUNT         (SRXL_SCHEDULE_MANDATORY_COUNT + SRXL_SCHEDULE_USER_COUNT)
 
@@ -804,13 +1014,13 @@ const srxlScheduleFnPtr srxlScheduleFuncs[SRXL_TOTAL_COUNT] = {
     /* must send srxlFrameQos, Rpm and then alternating items of our own */
     srxlFrameQos,
     srxlFrameRpm,
-#ifdef USE_ESC_SENSOR_TELEMETRY
-    /* make ESC mandatory when ESC telemetry is enabled */
+#ifdef USE_SPEKTRUM_ESC_TELEMETRY
     srxlFrameEsc,
-    srxlFrameFlightPackCurrent,
-#else
-    srxlFrameFlightPackCurrent,
 #endif
+#ifdef USE_SPEKTRUM_SMART_BATTERY_TELEMETRY
+    srxlFrameSmartBattery,
+#endif
+    srxlFrameFlightPackCurrent,
 #if defined(USE_GPS)
     srxlFrameGpsStat,
     srxlFrameGpsLoc,
