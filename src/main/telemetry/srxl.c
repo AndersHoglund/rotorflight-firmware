@@ -586,7 +586,7 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
             sbufWriteU8(dst,  0x00 + batteryNo);    // Packet type 0x00
             sbufWriteS8(dst,  10);      // Temp
             sbufWriteU32(dst, 12340);   // Current, mA
-            sbufWriteU16(dst, 5678);    // Capacity used
+            sbufWriteU16(dst, 2500);    // Capacity used
             sbufWriteU16(dst, 3330);    // Min cell voltage
             sbufWriteU16(dst, 4250);    // Max cell voltage
             sbufWriteU16(dst, 0x0000);  // Filler
@@ -614,12 +614,12 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
             sbufWriteU8(dst,  0x10 + batteryNo);    // Packet type 0x10
 
             sbufWriteS8(dst,  10);      // Temp
-            sbufWriteU16(dst, 3456);    // Voltage Cell1 mV
-            sbufWriteU16(dst, 4321);    // Voltage Cell2 mV
-            sbufWriteU16(dst, 3210);    // Voltage Cell3 mV
-            sbufWriteU16(dst, 3232);    // Voltage Cell4 mV
-            sbufWriteU16(dst, 3233);    // Voltage Cell5 mV
-            sbufWriteU16(dst, 3234);    // Voltage Cell6 mV
+            sbufWriteU16(dst, 4110);    // Voltage Cell1 mV
+            sbufWriteU16(dst, 4111);    // Voltage Cell2 mV
+            sbufWriteU16(dst, 4112);    // Voltage Cell3 mV
+            sbufWriteU16(dst, 4113);    // Voltage Cell4 mV
+            sbufWriteU16(dst, 4114);    // Voltage Cell5 mV
+            sbufWriteU16(dst, 4115);    // Voltage Cell6 mV
 
             break;
 
@@ -644,12 +644,12 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
             sbufWriteU8(dst,  0x20 + batteryNo);    // Packet type 0x20
 
             sbufWriteS8(dst,  11);      // Temp
-            sbufWriteU16(dst, 3456);    // Voltage Cell7 mV
-            sbufWriteU16(dst, 4321);    // Voltage Cell8 mV
-            sbufWriteU16(dst, 3210);    // Voltage Cell9 mV
-            sbufWriteU16(dst, 3232);    // Voltage Cell10 mV
-            sbufWriteU16(dst, 3233);    // Voltage Cell11 mV
-            sbufWriteU16(dst, 3234);    // Voltage Cell12 mV
+            sbufWriteU16(dst, 4116);    // Voltage Cell7 mV
+            sbufWriteU16(dst, 4117);    // Voltage Cell8 mV
+            sbufWriteU16(dst, 4118);    // Voltage Cell9 mV
+            sbufWriteU16(dst, 4119);    // Voltage Cell10 mV
+            sbufWriteU16(dst, 4120);    // Voltage Cell11 mV
+            sbufWriteU16(dst, 4121);    // Voltage Cell12 mV
 
             break;
 
@@ -675,12 +675,12 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
             sbufWriteU8(dst,  0x30 + batteryNo);    // Packet type 0x30
 
             sbufWriteS8(dst,  12);      // Temp
-            sbufWriteU16(dst, 3456);    // Voltage Cell13 mV
-            sbufWriteU16(dst, 4321);    // Voltage Cell14 mV
-            sbufWriteU16(dst, 3210);    // Voltage Cell15 mV
-            sbufWriteU16(dst, 3232);    // Voltage Cell16 mV
-            sbufWriteU16(dst, 3233);    // Voltage Cell17 mV
-            sbufWriteU16(dst, 3234);    // Voltage Cell18 mV
+            sbufWriteU16(dst, 4122);    // Voltage Cell13 mV
+            sbufWriteU16(dst, 4123);    // Voltage Cell14 mV
+            sbufWriteU16(dst, 4124);    // Voltage Cell15 mV
+            sbufWriteU16(dst, 4125);    // Voltage Cell16 mV
+            sbufWriteU16(dst, 4126);    // Voltage Cell17 mV
+            sbufWriteU16(dst, 4127);    // Voltage Cell18 mV
 
             break;
 
@@ -703,12 +703,12 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
             sbufWriteU8(dst,  SRXL_FRAMETYPE_SID);
             sbufWriteU8(dst,  0x80 + batteryNo);    // Packet type 0x80
 
-            sbufWriteU8(dst,  1);       // Chemistery
-            sbufWriteU8(dst, 18);       // Cells
-            sbufWriteU8(dst, 55);       // Mfg
+            sbufWriteU8(dst,    1);     // Chemistery
+            sbufWriteU8(dst,   18);     // Cells
+            sbufWriteU8(dst,   55);     // Mfg
             sbufWriteU16(dst, 123);     // Cycles
-            sbufWriteU8(dst, 221);      // Uid
-            sbufWriteU8(dst, 0x0);      // Fillers
+            sbufWriteU8(dst,  221);     // Uid
+            sbufWriteU8(dst,  0x0);     // Fillers
             sbufWriteU32(dst, 0x0);
             sbufWriteU16(dst, 0x0);
 
@@ -737,13 +737,13 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
             sbufWriteU8(dst,  0x90 + batteryNo);    // Packet type 0x90
 
             sbufWriteU8(dst,  44);      // Rfu ??
-            sbufWriteU16(dst, 55);      // Caoacity Ah mAh ??
+            sbufWriteU16(dst, 10000);   // Caoacity Ah mAh ??
             sbufWriteU16(dst, 66);      // Discharge rate C ??
             sbufWriteU16(dst, 77);      // Overcharge
-            sbufWriteU16(dst, 56);      // Fully Charged
+            sbufWriteU16(dst, 1000);    // Zero capacity
+            sbufWriteU16(dst, 9000);    // Fully Charged
             sbufWriteU8(dst,  11);      // Min temp
             sbufWriteU8(dst,  45);      // max temp
-            sbufWriteU16(dst, 0x0);     // Filler
 
             break;
         default:
@@ -751,7 +751,7 @@ bool srxlFrameSmartBattery(sbuf_t *dst, timeUs_t currentTimeUs)
     }
 
     frameType++;
-    if (frameType > 6 ){
+    if (frameType > 5) {
       frameType = 0;
       batteryNo++;
     }
@@ -822,7 +822,7 @@ bool srxlFrameText(sbuf_t *dst, timeUs_t currentTimeUs)
       for (int i = 0; i < SPEKTRUM_SRXL_TEXTGEN_ROWS; i++) lineSent[i] = false;
     }
 
-    if (lineSent[lineNo]) return false;
+    if (lineSent[lineNo] && !(cmsInMenu && (pCurrentDisplay == &srxlDisplayPort))) return false;
 
     sbufWriteU8(dst, SPEKTRUM_SRXL_DEVICE_TEXTGEN);
     sbufWriteU8(dst, SRXL_FRAMETYPE_SID);
