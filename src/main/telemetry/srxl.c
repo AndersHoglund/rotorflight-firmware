@@ -423,6 +423,7 @@ typedef struct
 #define STRU_TELE_FP_EMPTY_FIELDS_COUNT 2
 #define STRU_TELE_FP_EMPTY_FIELDS_VALUE 0xff
 
+#define SPEKTRUM_TMP_UNUSED 0xFfff   // Spce saus 0x7fff but iX20 then shows 3276.7, needs 0xffff for not used.
 #define SPEKTRUM_AMPS_UNUSED 0x7fff
 #define SPEKTRUM_AMPH_UNUSED 0x7fff
 
@@ -448,10 +449,10 @@ bool srxlFrameFlightPackCurrent(sbuf_t *dst, timeUs_t currentTimeUs)
         sbufWriteU8(dst, SRXL_FRAMETYPE_SID);
         sbufWriteU16(dst, amps);
         sbufWriteU16(dst, mah);
-        sbufWriteU16(dst, SPEKTRUM_TEMP_UNUSED);            // temp A
+        sbufWriteU16(dst, SPEKTRUM_TMP_UNUSED);             // temp A
         sbufWriteU16(dst, SPEKTRUM_AMPS_UNUSED);            // Amps B
         sbufWriteU16(dst, SPEKTRUM_AMPH_UNUSED);            // mAH B
-        sbufWriteU16(dst, SPEKTRUM_TEMP_UNUSED);            // temp B
+        sbufWriteU16(dst, SPEKTRUM_TMP_UNUSED);             // temp B
 
         sbufFill(dst, STRU_TELE_FP_EMPTY_FIELDS_VALUE, STRU_TELE_FP_EMPTY_FIELDS_COUNT);
 
