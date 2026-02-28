@@ -1289,7 +1289,7 @@ bool srxl2escDriverInit(void)
         return false;
     }
 
-    portOptions_e options = SERIAL_STOPBITS_1 | SERIAL_PARITY_NO | SERIAL_NOT_INVERTED | SERIAL_BIDIR;
+    portOptions_e options = SERIAL_STOPBITS_1 | SERIAL_PARITY_NO | SERIAL_NOT_INVERTED | SERIAL_BIDIR | SERIAL_BIDIR_PP;
     options |= escSensorConfig()->pinSwap ? SERIAL_PINSWAP : SERIAL_NOSWAP;
 
     srxl2escDriverPort = openSerialPort(
@@ -1328,9 +1328,10 @@ bool srxl2escDriverInit(void)
         
         while (cmpTimeUs(micros(), deadlineUs) < 0) {
             const uint32_t now = micros();
+            const bool busDiscovered = (state == Running || busMasterDeviceId != 0xFF);
             
             /* Send handshake every 50ms */
-            if (cmpTimeUs(now, nextHandshakeUs) >= 0) {
+            if (!busDiscovered && !srxl2escTxInProgress && writeBufferIdx == 0 && cmpTimeUs(now, nextHandshakeUs) >= 0) {
                 Srxl2HandshakeFrame handshake = {
                     .header = {
                         .id = packet_HEADER,
@@ -1345,10 +1346,7 @@ bool srxl2escDriverInit(void)
                         .info                = 0,
                         .uniqueId            = 0x4156,
                     },
-                };
-                
-                /* Delay initial handshake transmit for ESCs that need more time*/
-                delayMicroseconds(50000);
+                };          
 
                 srxl2escWriteData(&handshake, sizeof(handshake));
                 srxl2escTrySendPendingWriteBuffer();
@@ -1357,9 +1355,13 @@ bool srxl2escDriverInit(void)
             
             /* Process any incoming handshake responses */
             srxl2esc_poll();
+            /* Also run service here so responses queued by poll() can be
+             * transmitted before the scheduler starts. */
+            srxl2esc_service();
             
-            /* If we got a valid handshake response, exit early */
-            if (state == Running || busMasterDeviceId != 0xFF) {
+            /* If we got a valid handshake response, only exit when there is
+             * no pending or active TX left to flush. */
+            if ((state == Running || busMasterDeviceId != 0xFF) && writeBufferIdx == 0 && !srxl2escTxInProgress) {
                 break;
             }
             
