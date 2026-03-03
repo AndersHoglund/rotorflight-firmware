@@ -211,6 +211,14 @@ the actual values are calculated automatically (#332).
 
 `rc_threshold` default for collective (4th element) is changed from 50 to 100 (5% to 10% stick) for airborne/hands-on detection.
 
+`gyro_decimation_hz` default is changed to 500Hz (#405).
+
+`blackbox_mode` default is changed to ARMED (#412).
+
+`blackbox_log_governor` default is changed to ON (#412).
+
+`blackbox_rolling_erase` default is changed to ON (#412).
+
 
 ## Features
 
@@ -288,6 +296,11 @@ When the minimum sample count (from `gyro_calib_duration`) is reached and
 the smoothed high-frequency envelope is below `gyro_calib_noise_limit` on
 all axes, the DC estimate is stored as the gyro zero and calibration
 completes. The existing CLI parameters are unchanged.
+
+### RPM Filter Presets (#406)
+
+Minor changes introduced to all three presets for better match to common
+use cases.
 
 
 ## Bug Fixes
